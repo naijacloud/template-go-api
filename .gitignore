@@ -1,0 +1,4 @@
+/go-api
+/bin/
+.env
+.DS_Store
