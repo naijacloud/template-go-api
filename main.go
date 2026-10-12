@@ -4,6 +4,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -16,6 +17,11 @@ import (
 )
 
 const version = "1.0.0"
+
+// The page a browser gets at /. Other clients get the JSON index.
+//
+//go:embed welcome.html
+var welcomePage []byte
 
 func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel()}))
@@ -65,6 +71,11 @@ func routes() http.Handler {
 		writeJSON(w, http.StatusOK, map[string]string{"message": "Hello, " + r.PathValue("name") + "!"})
 	})
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept"), "text/html") {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(welcomePage)
+			return
+		}
 		writeJSON(w, http.StatusOK, map[string]any{
 			"name":   "go-api",
 			"routes": []string{"GET /healthz", "GET /api/time", "GET /api/hello/{name}"},
